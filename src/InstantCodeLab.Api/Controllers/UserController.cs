@@ -1,6 +1,8 @@
+using InstantCodeLab.Api.Hubs;
 using InstantCodeLab.Application.DTOs;
 using InstantCodeLab.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 namespace InstantCodeLab.Api.Controllers;
 
 [ApiController]
@@ -15,7 +17,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("{labId}")]
-    public ActionResult JoinUser([FromBody] LabLoginDto dto, [FromRoute] string labId = "CodeLab")
+    public ActionResult JoinUser([FromBody] LabLoginDto dto, [FromRoute] string labId)
     {
         if (dto == null)
         {

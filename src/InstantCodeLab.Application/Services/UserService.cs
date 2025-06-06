@@ -3,58 +3,67 @@ using InstantCodeLab.Application.Interfaces;
 using InstantCodeLab.Domain.Repositories;
 using InstantCodeLab.Domain.Entities;
 using System;
+using System.Linq;
 
 namespace InstantCodeLab.Application.Services;
 
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
-    private readonly string LabId = "Codelabe";
-    private readonly string LabPassword = "12345";
-    private readonly string LabAdminPin = "1234";
+    private readonly ILabRoomRepository _labRoomRepository;
 
-    public UserService(IUserRepository userRepository)
+    public UserService(IUserRepository userRepository, ILabRoomRepository labRoomRepository)
     {
         _userRepository = userRepository;
+        _labRoomRepository = labRoomRepository;
     }
-    public LabLoginResponseDto JoinUser(LabLoginDto dto, string labId)
+
+    public UserDto JoinUser(LabLoginDto dto, string labId)
     {
         // Check labid is valid
         // Check if user is already in the lab
         // Check if user is admin
         // Check if user password is valid
-        //if (dto == null)
-        //{
-        //    throw new ArgumentNullException(nameof(dto));
-        //}
 
-        //if(dto.Password != LabPassword)
-        //{
-        //    throw new Exception("Invalid password");
-        //}
+        var labRoom = _labRoomRepository.Data.FirstOrDefault(e => e.Id == labId);
 
-        //if(dto.AdminPin != LabAdminPin)
-        //{
-        //    throw new Exception("Invalid admin pin");
-        //}
+        if (labRoom is null)
+        {
+            throw new NotFoundException("Lab room not found");
+        }
+
+        if (dto == null)
+        {
+            throw new ArgumentNullException(nameof(dto));
+        }
+
+        if (dto.Password != labRoom.Password)
+        {
+            throw new Exception("Invalid password");
+        }
+
+        if ( dto.IsAdmin && (dto.AdminPin != labRoom.AdminPin))
+        {
+            throw new Exception("Invalid admin pin");
+        }
 
         User user = new User()
         {
-            UserName = dto.Username,
+            Username = dto.Username,
             LabRoomId = labId,
-            UserType = dto.IsAdmin ? 1 : 0,
-            IsConnected = false,
+            UserType = dto.IsAdmin ? 1 : 0
         };
+
         _userRepository.Data.Add(user);
 
-        return new LabLoginResponseDto
+        return new UserDto
         {
             Id = user.Id,
-            Username = user.UserName,
-            IsAdmin = true,
+            Username = user.Username,
+            IsAdmin = dto.IsAdmin,
             Code = user.OwnCode,
-            LabRoomName = user.LabRoomId
+            JoinedLabRoomName = labRoom.RoomName,
+            JoinedLabRoomId = labId
         };
     }
-
 }

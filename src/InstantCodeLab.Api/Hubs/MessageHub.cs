@@ -1,4 +1,5 @@
 using InstantCodeLab.Application.DTOs;
+using InstantCodeLab.Domain.Entities;
 using InstantCodeLab.Domain.Repositories;
 using Microsoft.AspNetCore.SignalR;
 
@@ -25,58 +26,64 @@ public class MessageHub : Hub
 
     }
 
-    public override async Task OnDisconnectedAsync(Exception exception)
+    public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        _userRepository.Data.RemoveAll(e => e.ConnectionId == Context.ConnectionId);
+        User? user = _userRepository.Data.FirstOrDefault(e => e.ConnectionId == Context.ConnectionId);
+        if(user is not null)
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, user.LabRoomId); 
+            _userRepository.Data.Remove(user);
+            await Clients.Group(user.LabRoomId).SendAsync("UserLeft", user.Id);
+
+        }
+
         await base.OnDisconnectedAsync(exception);
     }
 
-    /// <summary>
-    /// Join a specific lab room
-    /// </summary>
-    /// <param name="connection"></param>
-    /// <returns></returns>
-    // TODO: This should handle thru api
-    public async Task JoinSpecificlabelRoom(UserDto userDto)
+    public async Task UserJoined(string roomId, string userId)
     {
-        var currentUser = _userRepository.Data.FirstOrDefault(e => e.UserName == userDto.UserName);
-
-        if(currentUser is null)
+        await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
+        User? user = _userRepository.Data.FirstOrDefault(e => e.Id == userId);
+        if (user is null)
         {
-            throw new Exception("No User found");
+            throw new Exception("User not found");
         }
 
-        currentUser.PairedWithConnectionId = Context.ConnectionId;
-        currentUser.ConnectionId = Context.ConnectionId;
-        currentUser.IsConnected = true;
+        user.ConnectionId = Context.ConnectionId;
 
+        var users = _userRepository.Data.Where(e => e.LabRoomId == roomId).Select(e => UserDto.ConvertToUser(e));
+        await Clients.Group(roomId).SendAsync("UserJoined", users.ToList());
+    }
 
-        foreach (var user in _userRepository.Data)
+    public async Task LeaveRoom(string roomId, string userId)
+    {
+        User? user = _userRepository.Data.FirstOrDefault(e => e.Id == userId);
+        if (user is not null)
         {
-            await Clients.Client(user.ConnectionId).SendAsync("UserJoinedRoom", _userRepository.Data);
+            _userRepository.Data.Remove(user);  
+            await Clients.Group(user.LabRoomId).SendAsync("UserLeft", userId);
+            await Groups.RemoveFromGroupAsync(user.ConnectionId, roomId);
         }
     }
 
-    /// <summary>
-    /// Click on to see code of a user
-    /// </summary>
-    /// <param name="toUserName"></param>
-    /// <returns></returns>
-    /// <exception cref="Exception"></exception>
-    public async Task JoinPairCoding(string toUserName)
+    public async Task SwitchToEditor(string targetUserId)
     {
-        var toUser = _userRepository.Data.FirstOrDefault(e => e.Id == toUserName);
-        var currentUser = _userRepository.Data.FirstOrDefault(e => e.ConnectionId == Context.ConnectionId);
-
+        User? toUser = _userRepository.Data.FirstOrDefault(e => e.Id == targetUserId);
+        User? currentUser = _userRepository.Data.FirstOrDefault(e => e.ConnectionId == Context.ConnectionId);
         if (toUser is null)
         {
-            throw new Exception("No User found");
+            throw new Exception("User not found");
         }
 
-        toUser.PairedWithConnectionId = Context.ConnectionId;
-        currentUser.PairedWithConnectionId = toUser.ConnectionId;
+        User? prevUser = _userRepository.Data.FirstOrDefault(e => e.ViewingOfConnectionId == Context.ConnectionId);
 
-        await Clients.Client(currentUser.ConnectionId).SendAsync("ReceiveMessage", toUser.OwnCode);
+        prevUser?.ViewerConnectionIds.Remove(Context.ConnectionId);
+
+        toUser.ViewerConnectionIds.Add(Context.ConnectionId);
+        currentUser.ViewingOfConnectionId = toUser.ConnectionId;
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, targetUserId);
+        await Clients.Client(Context.ConnectionId).SendAsync("ReceiveCodeChange", toUser.OwnCode);
     }
 
     /// <summary>
@@ -85,25 +92,23 @@ public class MessageHub : Hub
     /// <param name="userName"> </param>
     /// <param name="code"></param>
     /// <returns></returns>
-    public async Task SendCode(string code)
+    /// 
+
+    public async Task SendCodeChange(string editorOwnerId, string newCode)
     {
-        var user = _userRepository.Data.FirstOrDefault(e => e.ConnectionId == Context.ConnectionId);
-        if (user is null)
+        if (editorOwnerId is null)
         {
-            throw new Exception("No User found");
+            throw new ArgumentNullException(nameof(editorOwnerId));
         }
-
-        var userConnectedWith = user.IsAtOwnIde ? user : _userRepository.Data.FirstOrDefault(e => e.PairedWithConnectionId == Context.ConnectionId);  
-        if(userConnectedWith is null)
+        var user = _userRepository.Data.FirstOrDefault(e => e.Id == editorOwnerId);
+        if(user is null)
         {
-            throw new Exception("Not connected with anyone");
+            throw new Exception("User not found");
         }
+        user.OwnCode = newCode;
 
-        userConnectedWith.OwnCode = code;
-
-        if (!string.IsNullOrWhiteSpace(user.PairedWithConnectionId) && !user.IsAtOwnIde)
-        {
-            await Clients.Client(user.PairedWithConnectionId).SendAsync("ReceiveMessage", code);
-        }
+        // Notify all viewers of this IDE
+        await Clients.Clients(user.ViewerConnectionIds)
+            .SendAsync("ReceiveCodeChange", newCode);
     }
 }

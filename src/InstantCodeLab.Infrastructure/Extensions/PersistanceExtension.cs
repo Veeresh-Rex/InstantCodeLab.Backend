@@ -9,6 +9,7 @@ public static class PersistanceExtension
     public static IServiceCollection AddPersistance(this IServiceCollection services)
     {
         services.AddSingleton<IUserRepository, UserRepository>();
+        services.AddSingleton<ILabRoomRepository, LabRoomRepository>();
         return services;
     }
 }

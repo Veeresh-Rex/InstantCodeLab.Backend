@@ -1,17 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace InstantCodeLab.Domain.Entities;
 
 public class User
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
-    public string UserName { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
     public string OwnCode { get; set; } = string.Empty;
     public int UserType { get; set; } = 0; // 0: User, 1: Admin
     public string LabRoomId { get; set; } = string.Empty;
     public string ConnectionId { get; set; } = string.Empty;
-    public bool IsConnected { get; set; } = true;
-    public string PairedWithConnectionId { get; set; } = string.Empty;
-    public bool IsAtOwnIde { get => PairedWithConnectionId == ConnectionId; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public bool IsAdmin { get => UserType == 1; }
+    public HashSet<string> ViewerConnectionIds { get; set; } = new HashSet<string>();
+    public string ViewingOfConnectionId { get; set; }
 }

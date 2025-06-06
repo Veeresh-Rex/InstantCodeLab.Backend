@@ -19,11 +19,13 @@ builder.Services.AddSwagger();
 builder.Services.AddApiCors(builder.Configuration["AllowedHosts"] ?? string.Empty);
 builder.Services.AddPersistance();
 builder.Services.AddSignalR();
+builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandlerServices();
 
 var app = builder.Build();
 
 app.UseExceptionHandler();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
