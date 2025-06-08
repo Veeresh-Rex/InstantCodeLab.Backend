@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\InstantCodeLab.Domain\InstantCodeLab.Domain.csproj" />
+    <ProjectReference Include="..\InstantCodeLab.Infrastructure\InstantCodeLab.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

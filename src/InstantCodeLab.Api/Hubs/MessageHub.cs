@@ -80,6 +80,11 @@ public class MessageHub : Hub
         prevUser?.ViewerConnectionIds.Remove(Context.ConnectionId);
 
         toUser.ViewerConnectionIds.Add(Context.ConnectionId);
+        if(toUser.Id == currentUser?.Id)
+        {
+            currentUser.IsUserAtOwnEditor = true;
+        }
+
         currentUser.ViewingOfConnectionId = toUser.ConnectionId;
 
         await Groups.AddToGroupAsync(Context.ConnectionId, targetUserId);
@@ -107,8 +112,14 @@ public class MessageHub : Hub
         }
         user.OwnCode = newCode;
 
+        var allViewerConnectionIds = user.ViewerConnectionIds.ToList();
+        if (user.IsUserAtOwnEditor)
+        {
+            allViewerConnectionIds.Add(user.ConnectionId);
+        }
+
         // Notify all viewers of this IDE
-        await Clients.Clients(user.ViewerConnectionIds)
+        await Clients.Clients(allViewerConnectionIds)
             .SendAsync("ReceiveCodeChange", newCode);
     }
 }

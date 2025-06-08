@@ -1,7 +1,5 @@
-using InstantCodeLab.Api.ExceptionHandlers;
 using InstantCodeLab.Api.Extensions;
 using InstantCodeLab.Api.Hubs;
-using InstantCodeLab.Api.Middleware;
 using InstantCodeLab.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -11,7 +11,7 @@ public static class ApplicationServicesExtensions
         // Add application services here
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IRoomService, RoomService>();
-
+        services.AddScoped<ICompilerService, CompilerService>();
 
         return services;
     }
