@@ -11,8 +11,7 @@ public static class ExternalApiExtension
     {
         services.AddHttpClient<IApiService, ApiService>((client) =>
         {
-            client.BaseAddress = new Uri("https://api.jdoodle.com/v1");
-            client.DefaultRequestHeaders.Add("Accept", "application/json"); 
+            client.BaseAddress = new Uri("https://api.jdoodle.com/");
         });
 
         services.AddScoped<IRemoteCompilerService, RemoteCompilerService>();

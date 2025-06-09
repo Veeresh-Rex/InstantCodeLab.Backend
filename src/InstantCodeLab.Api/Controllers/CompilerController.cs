@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace InstantCodeLab.Api.Controllers;
 
+[ApiController]
+[Route("api/[controller]")]
 public class CompilerController : ControllerBase
 {
     private readonly ICompilerService _compilerService;
@@ -14,9 +16,9 @@ public class CompilerController : ControllerBase
     }
 
     [HttpPost]
-    public ActionResult<CompileResponseDto> Compile([FromBody] CompileResquestDto dto)
+    public async Task<ActionResult> Compile([FromBody] CompileResquestDto dto)
     {
-        var result = _compilerService.Compile(dto);
+        var result = await _compilerService.Compile(dto);
 
         return Ok(result);
     }

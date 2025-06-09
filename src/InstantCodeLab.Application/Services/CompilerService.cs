@@ -22,7 +22,7 @@ public class CompilerService : ICompilerService
         var languageVersion = Constants.LanguageVersions.TryGetValue(dto.Language, out int version);
         var output =  await _remoteCompilerService.SendPostRequest(dto.Code, new KeyValuePair<LanguageCode, int>(dto.Language, version), dto.StdinInput);
 
-        return new CompileResponseDto() { Output = output };
+        return new CompileResponseDto() { Output = output.Output, IsError = !output.IsExecutionSuccess };
     }
 }
 

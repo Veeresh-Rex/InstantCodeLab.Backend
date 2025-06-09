@@ -14,7 +14,7 @@ public static class SwaggerExtensions
             options.SwaggerDoc("v1", new OpenApiInfo
             {
                 Version = "v1",
-                Title = "Order Management",
+                Title = "Instant Code Lab",
                 Description = "This API gives visibility of generic schemas and configurations.",
             });
 

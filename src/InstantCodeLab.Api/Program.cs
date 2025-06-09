@@ -19,6 +19,7 @@ builder.Services.AddPersistance();
 builder.Services.AddSignalR();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandlerServices();
+builder.Services.AddExternalCompilerApi();
 
 var app = builder.Build();
 

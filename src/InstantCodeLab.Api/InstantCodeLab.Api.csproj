@@ -22,4 +22,10 @@
     <ProjectReference Include="..\InstantCodeLab.Infrastructure\InstantCodeLab.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="entrypoint.sh">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

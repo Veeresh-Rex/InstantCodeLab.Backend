@@ -1,27 +1,22 @@
-﻿namespace InstantCodeLab.Domain.Enums;
+﻿using System.Text.Json.Serialization;
+
+namespace InstantCodeLab.Domain.Enums;
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum LanguageCode
 {
     java,
     bash,
     c,
     csharp,
-    cpp,
     cpp17,
-    coffeescript,
     dart,
     go,
     kotlin,
-    moonscript,
     nodejs,
-    php,
-    perl,
-    python2,
     python3,
-    r,
     ruby,
     rust,
-    scala,
     sql,
-    swift,
     typescript,
 }

@@ -1,4 +1,5 @@
 ﻿using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using InstantCodeLab.Infrastructure.External.Interface;
 
@@ -15,13 +16,25 @@ public class ApiService : IApiService
 
     public async Task<string> SendPostRequest(string body)
     {
-        var requestContent = new StringContent(body);
-        string url = "https://api.jdoodle.com/v1/execute";
+        var requestContent = new StringContent(body, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PostAsync(url, requestContent);
-        response.EnsureSuccessStatusCode();
+        try
+        {
+            var response = await _httpClient.PostAsync("v1/execute", requestContent);
+            response.EnsureSuccessStatusCode();
 
-        var result = await response.Content.ReadAsStringAsync();
-        return result;
+            var result = await response.Content.ReadAsStringAsync();
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            // Log the exception or handle it as needed
+            throw new System.Exception("Error while sending request to API", ex);
+        }
+        catch (System.Exception ex)
+        {
+            // Handle other exceptions
+            throw new System.Exception("An unexpected error occurred", ex);
+        }
     }
 }

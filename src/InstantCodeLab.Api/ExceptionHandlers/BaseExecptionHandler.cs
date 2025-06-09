@@ -29,7 +29,7 @@ public abstract class BaseExecptionHandler<IException> : IExceptionHandler where
     {
         Title = "Some problem occered",
         Status = (int)HttpStatusCode.BadRequest,
-        Type = ExceptionType ?? "Order management api",
+        Type = ExceptionType ?? "Instant Code Lab Api",
         Errors = GetErrorMessage(exception as IException)
     };
 }
