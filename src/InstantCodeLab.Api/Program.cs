@@ -4,8 +4,6 @@ using InstantCodeLab.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.UseUrls("http://0.0.0.0:8080");
-
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -16,7 +14,7 @@ builder.Services.AddApplicationServices();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAppHealthChecks();
 builder.Services.AddSwagger();
-builder.Services.AddApiCors(builder.Configuration["AllowedHosts"] ?? string.Empty);
+//builder.Services.AddApiCors(builder.Configuration["AllowedHosts"] ?? string.Empty);
 builder.Services.AddPersistance();
 builder.Services.AddSignalR();
 builder.Services.AddProblemDetails();
@@ -39,7 +37,7 @@ app.UseHttpsRedirection();
 app.MapHeartbeat();
 
 app.UseAuthorization();
-app.UseCors("frontend");
+//app.UseCors("frontend");
 
 app.MapControllers();
 app.MapHub<MessageHub>("/message");

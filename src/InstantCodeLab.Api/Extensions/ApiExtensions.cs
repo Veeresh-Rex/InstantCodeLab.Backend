@@ -8,7 +8,7 @@ public static class ApiExtensions
         {
             options.AddPolicy("frontend", builder =>
             {
-                builder.WithOrigins("https://instant-code-lab.vercel.app")
+                builder.WithOrigins("*")
                        .AllowAnyHeader()
                        .AllowAnyMethod()
                        .AllowCredentials();
