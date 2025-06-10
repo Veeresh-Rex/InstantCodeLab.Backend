@@ -1,7 +1,5 @@
 #!/bin/bash
 
-if [ -n "$AppSet" ]; then
-  echo "$AppSet" | base64 -d > /app/appsettings.json
-fi
+echo "$AppSet" > /app/appsettings.json
 
 dotnet InstantCodeLab.Api.dll
