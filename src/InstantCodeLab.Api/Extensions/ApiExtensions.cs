@@ -6,13 +6,11 @@ public static class ApiExtensions
     {
         services.AddCors(options =>
         {
-            options.AddPolicy("frontend", builder =>
-            {
-                builder.WithOrigins("*")
-                       .AllowAnyHeader()
-                       .AllowAnyMethod()
-                       .AllowCredentials();
-            });
+            options.AddPolicy("AllowAll",
+                  policy => policy
+                      .AllowAnyOrigin()
+                      .AllowAnyMethod()
+                      .AllowAnyHeader());
         });
     }
 }
