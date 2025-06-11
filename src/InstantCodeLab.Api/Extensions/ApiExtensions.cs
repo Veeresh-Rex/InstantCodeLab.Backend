@@ -6,11 +6,15 @@ public static class ApiExtensions
     {
         services.AddCors(options =>
         {
-            options.AddPolicy("AllowAll",
-                  policy => policy
-                      .AllowAnyOrigin()
-                      .AllowAnyMethod()
-                      .AllowAnyHeader());
+            options.AddPolicy(name: "frontend",
+                policy =>
+                {
+                    policy
+                        .WithOrigins("https://instant-code-lab.vercel.app")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
         });
     }
 }

@@ -37,7 +37,7 @@ app.UseHttpsRedirection();
 app.MapHeartbeat();
 
 app.UseAuthorization();
-app.UseCors("AllowAll");
+app.UseCors("frontend");
 
 app.MapControllers();
 app.MapHub<MessageHub>("/message");
