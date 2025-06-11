@@ -28,8 +28,8 @@ public class RoomService : IRoomService
 
         return new RoomResponseDto
         {
-            AdminUrl = "http://localhost:5173/editor/admin/" + labRoom.Id,
-            MembersUrl = "http://localhost:5173/editor/" + labRoom.Id,
+            AdminUrl = "https://instant-code-lab.vercel.app/editor/admin/" + labRoom.Id,
+            MembersUrl = "https://instant-code-lab.vercel.app/editor/" + labRoom.Id,
         };
     }
 

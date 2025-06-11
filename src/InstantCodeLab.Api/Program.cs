@@ -25,8 +25,6 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 
-
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -36,16 +34,17 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.MapHeartbeat();
 
-app.UseAuthorization();
 app.UseCors("frontend");
+
+app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<MessageHub>("/message");
-///app.UseMiddleware<CorrelationIdMiddleware>();
 
 app.MapGet("/", () => "Hello World from InstantCodeLab API!");
 
 await app.RunAsync();
+
 
 public partial class Program
 {
