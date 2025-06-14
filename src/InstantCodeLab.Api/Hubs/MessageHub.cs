@@ -117,6 +117,7 @@ public class MessageHub : Hub
         {
             allViewerConnectionIds.Add(user.ConnectionId);
         }
+        allViewerConnectionIds.Remove(Context.ConnectionId);
 
         // Notify all viewers of this IDE
         await Clients.Clients(allViewerConnectionIds)
