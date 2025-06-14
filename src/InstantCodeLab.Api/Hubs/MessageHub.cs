@@ -113,7 +113,7 @@ public class MessageHub : Hub
         user.OwnCode = newCode;
 
         var allViewerConnectionIds = user.ViewerConnectionIds.ToList();
-        if (user.IsUserAtOwnEditor)
+        if (user.IsUserAtOwnEditor && editorOwnerId != user.Id)
         {
             allViewerConnectionIds.Add(user.ConnectionId);
         }
