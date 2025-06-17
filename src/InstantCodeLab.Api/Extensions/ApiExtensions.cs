@@ -10,7 +10,7 @@ public static class ApiExtensions
                 policy =>
                 {
                     policy
-                        .WithOrigins("https://instant-code-lab.vercel.app")
+                        .WithOrigins("https://instant-code-lab.vercel.app", "http://localhost:5173")
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials();

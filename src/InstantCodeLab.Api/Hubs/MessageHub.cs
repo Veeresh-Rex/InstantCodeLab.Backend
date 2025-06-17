@@ -1,6 +1,7 @@
 using InstantCodeLab.Application.DTOs;
 using InstantCodeLab.Domain.Entities;
 using InstantCodeLab.Domain.Repositories;
+using InstantCodeLab.Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.SignalR;
 
 namespace InstantCodeLab.Api.Hubs;
@@ -66,6 +67,18 @@ public class MessageHub : Hub
         }
     }
 
+    public async Task DeleteRoom(string roomId)
+    {
+        List<User> allUsers = _userRepository.Data.Where(e => e.LabRoomId == roomId).ToList();
+        _userRepository.Data.RemoveAll(e => e.LabRoomId == roomId);
+
+        foreach (var user in allUsers)
+        {
+            await Clients.Group(roomId).SendAsync("UserLeft", user.Id);
+            await Groups.RemoveFromGroupAsync(user.ConnectionId, roomId);
+        }
+    }
+
     public async Task SwitchToEditor(string targetUserId)
     {
         User? toUser = _userRepository.Data.FirstOrDefault(e => e.Id == targetUserId);
@@ -106,6 +119,7 @@ public class MessageHub : Hub
             throw new ArgumentNullException(nameof(editorOwnerId));
         }
         var user = _userRepository.Data.FirstOrDefault(e => e.Id == editorOwnerId);
+        var currentUser = _userRepository.Data.FirstOrDefault(e => e.ConnectionId == Context.ConnectionId);
         if(user is null)
         {
             throw new Exception("User not found");
@@ -113,11 +127,10 @@ public class MessageHub : Hub
         user.OwnCode = newCode;
 
         var allViewerConnectionIds = user.ViewerConnectionIds.ToList();
-        if (user.IsUserAtOwnEditor && editorOwnerId != user.Id)
+        if (user.IsUserAtOwnEditor && editorOwnerId != currentUser?.Id)
         {
             allViewerConnectionIds.Add(user.ConnectionId);
         }
-        allViewerConnectionIds.Remove(Context.ConnectionId);
 
         // Notify all viewers of this IDE
         await Clients.Clients(allViewerConnectionIds)

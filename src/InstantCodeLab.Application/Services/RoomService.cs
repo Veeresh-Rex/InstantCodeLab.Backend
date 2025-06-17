@@ -3,16 +3,19 @@ using InstantCodeLab.Application.DTOs;
 using InstantCodeLab.Application.Interfaces;
 using InstantCodeLab.Domain.Entities;
 using InstantCodeLab.Domain.Repositories;
+using Microsoft.Extensions.Configuration;
 
 namespace InstantCodeLab.Application.Services;
 
 public class RoomService : IRoomService
 {
     private readonly ILabRoomRepository _labRoomRepository;
+    private readonly IConfiguration _configuration;
 
-    public RoomService(ILabRoomRepository labRoomRepository)
+    public RoomService(ILabRoomRepository labRoomRepository, IConfiguration configuration)
     {
         _labRoomRepository = labRoomRepository;
+        _configuration = configuration;
     }
 
     public RoomResponseDto CreateRoom(RoomRequestDto request)
@@ -25,11 +28,12 @@ public class RoomService : IRoomService
         };
 
         _labRoomRepository.Data.Add(labRoom);
+        string forntendUrl = _configuration.GetValue<string>("FrontendUrl") ?? "https://instant-code-lab.vercel.app";
 
         return new RoomResponseDto
         {
-            AdminUrl = "https://instant-code-lab.vercel.app/editor/admin/" + labRoom.Id,
-            MembersUrl = "https://instant-code-lab.vercel.app/editor/" + labRoom.Id,
+            AdminUrl = forntendUrl + "/editor/admin/" + labRoom.Id,
+            MembersUrl = forntendUrl + "/editor/" + labRoom.Id,
         };
     }
 
