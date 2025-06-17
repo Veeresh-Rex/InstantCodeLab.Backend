@@ -119,7 +119,6 @@ public class MessageHub : Hub
             throw new ArgumentNullException(nameof(editorOwnerId));
         }
         var user = _userRepository.Data.FirstOrDefault(e => e.Id == editorOwnerId);
-        var currentUser = _userRepository.Data.FirstOrDefault(e => e.ConnectionId == Context.ConnectionId);
         if(user is null)
         {
             throw new Exception("User not found");
@@ -127,7 +126,7 @@ public class MessageHub : Hub
         user.OwnCode = newCode;
 
         var allViewerConnectionIds = user.ViewerConnectionIds.ToList();
-        if (user.IsUserAtOwnEditor && editorOwnerId != currentUser?.Id)
+        if (user.IsUserAtOwnEditor)
         {
             allViewerConnectionIds.Add(user.ConnectionId);
         }
