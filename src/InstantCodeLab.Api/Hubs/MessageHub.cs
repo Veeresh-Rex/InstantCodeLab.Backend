@@ -99,9 +99,11 @@ public class MessageHub : Hub
         }
 
         currentUser.ViewingOfConnectionId = toUser.ConnectionId;
+        string emptyString = "";
+        List<byte> byteList = System.Text.Encoding.UTF8.GetBytes(emptyString).ToList();
 
         await Groups.AddToGroupAsync(Context.ConnectionId, targetUserId);
-        await Clients.Client(Context.ConnectionId).SendAsync("ReceiveCodeChange", toUser.OwnCode);
+        await Clients.Client(Context.ConnectionId).SendAsync("ReceiveCodeChange", byteList);
     }
 
     /// <summary>
@@ -112,7 +114,7 @@ public class MessageHub : Hub
     /// <returns></returns>
     /// 
 
-    public async Task SendCodeChange(string editorOwnerId, string newCode)
+    public async Task SendCodeChange(string editorOwnerId, List<byte> newCode)
     {
         if (editorOwnerId is null)
         {
@@ -123,13 +125,15 @@ public class MessageHub : Hub
         {
             throw new Exception("User not found");
         }
-        user.OwnCode = newCode;
+        //user.OwnCode = newCode;
 
         var allViewerConnectionIds = user.ViewerConnectionIds.ToList();
         if (user.IsUserAtOwnEditor)
         {
             allViewerConnectionIds.Add(user.ConnectionId);
         }
+
+        allViewerConnectionIds.Remove(Context.ConnectionId);
 
         // Notify all viewers of this IDE
         await Clients.Clients(allViewerConnectionIds)
