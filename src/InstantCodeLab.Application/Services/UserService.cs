@@ -51,6 +51,7 @@ public class UserService : IUserService
         {
             Username = dto.Username,
             LabRoomId = labId,
+            OwnCode = string.Empty,
             UserType = dto.IsAdmin ? 1 : 0
         };
 

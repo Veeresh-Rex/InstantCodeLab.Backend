@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-
 namespace InstantCodeLab.Domain.Entities;
 
 public class User
@@ -14,6 +12,5 @@ public class User
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public bool IsAdmin { get => UserType == 1; }
     public bool IsUserAtOwnEditor { get; set; } = true;
-    public SortedSet<string> ViewerConnectionIds { get; set; } = new SortedSet<string>();
-    public string ViewingOfConnectionId { get; set; }
+    public string AddedToGroup { get; set; }
 }

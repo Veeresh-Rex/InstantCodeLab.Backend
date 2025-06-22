@@ -1,7 +1,6 @@
 using InstantCodeLab.Application.DTOs;
 using InstantCodeLab.Domain.Entities;
 using InstantCodeLab.Domain.Repositories;
-using InstantCodeLab.Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.SignalR;
 
 namespace InstantCodeLab.Api.Hubs;
@@ -30,9 +29,9 @@ public class MessageHub : Hub
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         User? user = _userRepository.Data.FirstOrDefault(e => e.ConnectionId == Context.ConnectionId);
-        if(user is not null)
+        if (user is not null)
         {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, user.LabRoomId); 
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, user.LabRoomId);
             _userRepository.Data.Remove(user);
             await Clients.Group(user.LabRoomId).SendAsync("UserLeft", user.Id);
 
@@ -44,6 +43,8 @@ public class MessageHub : Hub
     public async Task UserJoined(string roomId, string userId)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
+        await Groups.AddToGroupAsync(Context.ConnectionId, userId);
+
         User? user = _userRepository.Data.FirstOrDefault(e => e.Id == userId);
         if (user is null)
         {
@@ -51,6 +52,7 @@ public class MessageHub : Hub
         }
 
         user.ConnectionId = Context.ConnectionId;
+        user.AddedToGroup = Context.ConnectionId;
 
         var users = _userRepository.Data.Where(e => e.LabRoomId == roomId).Select(e => UserDto.ConvertToUser(e));
         await Clients.Group(roomId).SendAsync("UserJoined", users.ToList());
@@ -61,7 +63,7 @@ public class MessageHub : Hub
         User? user = _userRepository.Data.FirstOrDefault(e => e.Id == userId);
         if (user is not null)
         {
-            _userRepository.Data.Remove(user);  
+            _userRepository.Data.Remove(user);
             await Clients.Group(user.LabRoomId).SendAsync("UserLeft", userId);
             await Groups.RemoveFromGroupAsync(user.ConnectionId, roomId);
         }
@@ -87,23 +89,11 @@ public class MessageHub : Hub
         {
             throw new Exception("User not found");
         }
-
-        User? prevUser = _userRepository.Data.FirstOrDefault(e => e.ViewingOfConnectionId == Context.ConnectionId);
-
-        prevUser?.ViewerConnectionIds.Remove(Context.ConnectionId);
-
-        toUser.ViewerConnectionIds.Add(Context.ConnectionId);
-        if(toUser.Id == currentUser?.Id)
-        {
-            currentUser.IsUserAtOwnEditor = true;
-        }
-
-        currentUser.ViewingOfConnectionId = toUser.ConnectionId;
-        string emptyString = "";
-        List<byte> byteList = System.Text.Encoding.UTF8.GetBytes(emptyString).ToList();
-
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, currentUser.AddedToGroup);
         await Groups.AddToGroupAsync(Context.ConnectionId, targetUserId);
-        await Clients.Client(Context.ConnectionId).SendAsync("ReceiveCodeChange", byteList);
+        currentUser.AddedToGroup = targetUserId;
+
+        await Clients.Client(Context.ConnectionId).SendAsync("ReceiveCodeChange", toUser.OwnCode);
     }
 
     /// <summary>
@@ -114,29 +104,20 @@ public class MessageHub : Hub
     /// <returns></returns>
     /// 
 
-    public async Task SendCodeChange(string editorOwnerId, List<byte> newCode)
+    public async Task SendCodeChange(string editorOwnerId, string newCode)
     {
-        if (editorOwnerId is null)
+       if (editorOwnerId is null)
         {
             throw new ArgumentNullException(nameof(editorOwnerId));
         }
         var user = _userRepository.Data.FirstOrDefault(e => e.Id == editorOwnerId);
-        if(user is null)
+        if (user is null)
         {
             throw new Exception("User not found");
         }
-        //user.OwnCode = newCode;
-
-        var allViewerConnectionIds = user.ViewerConnectionIds.ToList();
-        if (user.IsUserAtOwnEditor)
-        {
-            allViewerConnectionIds.Add(user.ConnectionId);
-        }
-
-        allViewerConnectionIds.Remove(Context.ConnectionId);
+        user.OwnCode = newCode;
 
         // Notify all viewers of this IDE
-        await Clients.Clients(allViewerConnectionIds)
-            .SendAsync("ReceiveCodeChange", newCode);
+        await Clients.GroupExcept(editorOwnerId, Context.ConnectionId).SendAsync("ReceiveCodeChange", newCode);
     }
 }
