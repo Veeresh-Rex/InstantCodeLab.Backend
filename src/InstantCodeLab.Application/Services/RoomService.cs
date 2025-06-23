@@ -51,7 +51,8 @@ public class RoomService : IRoomService
             Id = room.Id.ToString(),
             LabName = room.RoomName,
             IsRoomPasswordEnabled = !string.IsNullOrWhiteSpace(room.Password),
-            IsAdminPinEnabled = !string.IsNullOrEmpty(room.AdminPin)
+            IsAdminPinEnabled = !string.IsNullOrEmpty(room.AdminPin),
+            Language = room.LanguageCode
         };
     }
 }

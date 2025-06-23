@@ -1,5 +1,6 @@
 using InstantCodeLab.Application.DTOs;
 using InstantCodeLab.Domain.Entities;
+using InstantCodeLab.Domain.Enums;
 using InstantCodeLab.Domain.Repositories;
 using Microsoft.AspNetCore.SignalR;
 
@@ -8,9 +9,12 @@ namespace InstantCodeLab.Api.Hubs;
 public class MessageHub : Hub
 {
     private readonly IUserRepository _userRepository;
-    public MessageHub(IUserRepository userRepository)
+    private readonly ILabRoomRepository _labRoomRepository;
+
+    public MessageHub(IUserRepository userRepository, ILabRoomRepository labRoomRepository)
     {
         _userRepository = userRepository;
+        _labRoomRepository = labRoomRepository;
     }
 
     public override async Task OnConnectedAsync()
@@ -74,9 +78,10 @@ public class MessageHub : Hub
         List<User> allUsers = _userRepository.Data.Where(e => e.LabRoomId == roomId).ToList();
         _userRepository.Data.RemoveAll(e => e.LabRoomId == roomId);
 
+        await Clients.Group(roomId).SendAsync("RoomIsDeleted");
+
         foreach (var user in allUsers)
         {
-            await Clients.Group(roomId).SendAsync("UserLeft", user.Id);
             await Groups.RemoveFromGroupAsync(user.ConnectionId, roomId);
         }
     }
@@ -119,5 +124,17 @@ public class MessageHub : Hub
 
         // Notify all viewers of this IDE
         await Clients.GroupExcept(editorOwnerId, Context.ConnectionId).SendAsync("ReceiveCodeChange", newCode);
+    }
+
+    public async Task ChangeLanguage(LanguageCode languageCode, string roomId)
+    {
+        var room = _labRoomRepository.Data.FirstOrDefault(e => e.Id == roomId);
+        if (room is null)
+        {
+            throw new Exception("Room not found");
+        }
+        room.LanguageCode = languageCode;
+
+        await Clients.Group(roomId).SendAsync("LanguageChanged", languageCode);
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace InstantCodeLab.Application.DTOs;
+﻿using InstantCodeLab.Domain.Enums;
+
+namespace InstantCodeLab.Application.DTOs;
 
 public class RoomRequestDto
 {
@@ -19,4 +21,5 @@ public class GetRoomResponseDto
     public string LabName { get; set; }
     public bool IsRoomPasswordEnabled { get; set; }
     public bool IsAdminPinEnabled { get; set; }
+    public LanguageCode? Language { get; set; }
 }
