@@ -4,6 +4,8 @@ using InstantCodeLab.Domain.Repositories;
 using InstantCodeLab.Domain.Entities;
 using System;
 using System.Linq;
+using Microsoft.Extensions.Configuration;
+using InstantCodeLab.Infrastructure.Utilities;
 
 namespace InstantCodeLab.Application.Services;
 
@@ -11,11 +13,13 @@ public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly ILabRoomRepository _labRoomRepository;
+    private readonly IConfiguration _configuration;
 
-    public UserService(IUserRepository userRepository, ILabRoomRepository labRoomRepository)
+    public UserService(IUserRepository userRepository, ILabRoomRepository labRoomRepository, IConfiguration configuration)
     {
         _userRepository = userRepository;
         _labRoomRepository = labRoomRepository;
+        _configuration = configuration;
     }
 
     public UserDto JoinUser(LabLoginDto dto, string labId)
@@ -26,6 +30,9 @@ public class UserService : IUserService
         // Check if user password is valid
 
         var labRoom = _labRoomRepository.Data.FirstOrDefault(e => e.Id == labId);
+        string passwordSalt = _configuration.GetValue<string>("PasswordOptions:PasswordSalt") ?? string.Empty;
+        string adminSalt = _configuration.GetValue<string>("PasswordOptions:AdminPinSalt") ?? string.Empty;
+
 
         if (labRoom is null)
         {
@@ -37,12 +44,12 @@ public class UserService : IUserService
             throw new ArgumentNullException(nameof(dto));
         }
 
-        if (dto.Password != labRoom.Password)
+        if (!string.IsNullOrWhiteSpace(labRoom.Password) && !PasswordHasher.VerifyPassword(dto.Password, labRoom.Password, passwordSalt))
         {
             throw new Exception("Invalid password");
         }
 
-        if ( dto.IsAdmin && (dto.AdminPin != labRoom.AdminPin))
+        if (dto.IsAdmin && !string.IsNullOrWhiteSpace(labRoom.AdminPin) && !PasswordHasher.VerifyPassword(dto.AdminPin, labRoom.AdminPin, adminSalt))
         {
             throw new Exception("Invalid admin pin");
         }

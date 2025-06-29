@@ -4,6 +4,7 @@ using InstantCodeLab.Application.Interfaces;
 using InstantCodeLab.Domain.Entities;
 using InstantCodeLab.Domain.Repositories;
 using Microsoft.Extensions.Configuration;
+using InstantCodeLab.Infrastructure.Utilities;
 
 namespace InstantCodeLab.Application.Services;
 
@@ -20,11 +21,17 @@ public class RoomService : IRoomService
 
     public RoomResponseDto CreateRoom(RoomRequestDto request)
     {
+        string passwordSalt = _configuration.GetValue<string>("PasswordOptions:PasswordSalt") ?? string.Empty;
+        string adminSalt = _configuration.GetValue<string>("PasswordOptions:AdminPinSalt") ?? string.Empty;
+
+        string? hashedPassword = string.IsNullOrWhiteSpace(request.Password) ? null : PasswordHasher.HashPassword(request.Password, passwordSalt);
+        string? hashedAdminPin = string.IsNullOrWhiteSpace(request.AdminPin) ? null : PasswordHasher.HashPassword(request.AdminPin, adminSalt);
+
         LabRoom labRoom = new LabRoom
         {
             RoomName = request.LabName,
-            Password = request.Password,
-            AdminPin = request.AdminPin
+            Password = hashedPassword,
+            AdminPin = hashedAdminPin
         };
 
         _labRoomRepository.Data.Add(labRoom);
