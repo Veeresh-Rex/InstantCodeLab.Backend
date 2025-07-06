@@ -15,21 +15,21 @@ public class RoomController : ControllerBase
     }
 
     [HttpPost]
-    public ActionResult JoinUser([FromBody] RoomRequestDto dto)
+    public async Task<ActionResult> JoinUser([FromBody] RoomRequestDto dto)
     {
         if (dto == null)
         {
             return BadRequest();
         }
-        var newRoom = _roomService.CreateRoom(dto);
+        var newRoom = await _roomService.CreateRoom(dto);
 
         return Ok(newRoom);
     }
 
     [HttpGet("{roomId}")]
-    public ActionResult<GetRoomResponseDto> GetRoom(string roomId)
+    public async Task<ActionResult<GetRoomResponseDto>> GetRoom(string roomId)
     {
-        var room = _roomService.GetRoom(roomId);
+        var room = await _roomService.GetRoom(roomId);
 
         return Ok(room);
     }

@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using InstantCodeLab.Infrastructure.Utilities;
+using System.Threading.Tasks;
 
 namespace InstantCodeLab.Application.Services;
 
@@ -22,14 +23,14 @@ public class UserService : IUserService
         _configuration = configuration;
     }
 
-    public UserDto JoinUser(LabLoginDto dto, string labId)
+    public async Task<UserDto> JoinUser(LabLoginDto dto, string labId)
     {
         // Check labid is valid
         // Check if user is already in the lab
         // Check if user is admin
         // Check if user password is valid
 
-        var labRoom = _labRoomRepository.Data.FirstOrDefault(e => e.Id == labId);
+        var labRoom = await _labRoomRepository.GetByIdAsync(labId);
         string passwordSalt = _configuration.GetValue<string>("PasswordOptions:PasswordSalt") ?? string.Empty;
         string adminSalt = _configuration.GetValue<string>("PasswordOptions:AdminPinSalt") ?? string.Empty;
 
@@ -62,11 +63,11 @@ public class UserService : IUserService
             UserType = dto.IsAdmin ? 1 : 0
         };
 
-        _userRepository.Data.Add(user);
+        await _userRepository.CreateAsync(user);
 
         return new UserDto
         {
-            Id = user.Id,
+            Id = user._id,
             Username = user.Username,
             IsAdmin = dto.IsAdmin,
             Code = user.OwnCode,

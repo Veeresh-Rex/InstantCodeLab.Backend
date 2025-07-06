@@ -5,6 +5,7 @@ using InstantCodeLab.Domain.Entities;
 using InstantCodeLab.Domain.Repositories;
 using Microsoft.Extensions.Configuration;
 using InstantCodeLab.Infrastructure.Utilities;
+using System.Threading.Tasks;
 
 namespace InstantCodeLab.Application.Services;
 
@@ -19,7 +20,7 @@ public class RoomService : IRoomService
         _configuration = configuration;
     }
 
-    public RoomResponseDto CreateRoom(RoomRequestDto request)
+    public async Task<RoomResponseDto> CreateRoom(RoomRequestDto request)
     {
         string passwordSalt = _configuration.GetValue<string>("PasswordOptions:PasswordSalt") ?? string.Empty;
         string adminSalt = _configuration.GetValue<string>("PasswordOptions:AdminPinSalt") ?? string.Empty;
@@ -34,19 +35,19 @@ public class RoomService : IRoomService
             AdminPin = hashedAdminPin
         };
 
-        _labRoomRepository.Data.Add(labRoom);
+        await _labRoomRepository.CreateAsync(labRoom);
         string forntendUrl = _configuration.GetValue<string>("FrontendUrl") ?? "https://instant-code-lab.vercel.app";
 
         return new RoomResponseDto
         {
-            AdminUrl = forntendUrl + "/editor/admin/" + labRoom.Id,
-            MembersUrl = forntendUrl + "/editor/" + labRoom.Id,
+            AdminUrl = forntendUrl + "/editor/admin/" + labRoom._id,
+            MembersUrl = forntendUrl + "/editor/" + labRoom._id,
         };
     }
 
-    public GetRoomResponseDto GetRoom(string roomId)
+    public async Task<GetRoomResponseDto> GetRoom(string roomId)
     {
-        var room = _labRoomRepository.Data.FirstOrDefault(e => e.Id.ToString() == roomId);
+        var room = await _labRoomRepository.GetByIdAsync(roomId);
 
         if (room is null)
         {
@@ -55,7 +56,7 @@ public class RoomService : IRoomService
 
         return new GetRoomResponseDto()
         {
-            Id = room.Id.ToString(),
+            Id = room._id.ToString(),
             LabName = room.RoomName,
             IsRoomPasswordEnabled = !string.IsNullOrWhiteSpace(room.Password),
             IsAdminPinEnabled = !string.IsNullOrEmpty(room.AdminPin),

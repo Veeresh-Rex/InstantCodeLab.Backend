@@ -31,7 +31,7 @@ public class UserDto
         {
             Username = user.Username,
             Code = user.OwnCode,
-            Id = user.Id,
+            Id = user._id,
             IsAdmin = user.IsAdmin,
             JoinedLabRoomId = user.LabRoomId
         };

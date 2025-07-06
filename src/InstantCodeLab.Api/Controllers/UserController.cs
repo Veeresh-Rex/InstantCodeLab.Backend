@@ -1,6 +1,7 @@
 using InstantCodeLab.Application.DTOs;
 using InstantCodeLab.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+
 namespace InstantCodeLab.Api.Controllers;
 
 [ApiController]
@@ -15,13 +16,13 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("{labId}")]
-    public ActionResult JoinUser([FromBody] LabLoginDto dto, [FromRoute] string labId)
+    public async Task<ActionResult> JoinUser([FromBody] LabLoginDto dto, [FromRoute] string labId)
     {
         if (dto == null)
         {
             return BadRequest();
         }
-        var user = _userService.JoinUser(dto, labId);
+        var user = await _userService.JoinUser(dto, labId);
 
         return Ok(user);
     }

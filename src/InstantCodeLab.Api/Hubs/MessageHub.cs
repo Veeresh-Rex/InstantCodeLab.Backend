@@ -3,6 +3,7 @@ using InstantCodeLab.Domain.Entities;
 using InstantCodeLab.Domain.Enums;
 using InstantCodeLab.Domain.Repositories;
 using Microsoft.AspNetCore.SignalR;
+using MongoDB.Driver.Linq;
 
 namespace InstantCodeLab.Api.Hubs;
 
@@ -32,12 +33,12 @@ public class MessageHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        User? user = _userRepository.Data.FirstOrDefault(e => e.ConnectionId == Context.ConnectionId);
+        User? user = await _userRepository.FindFirstOrDefaultAsync(e => e.ConnectionId == Context.ConnectionId);
         if (user is not null)
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, user.LabRoomId);
-            _userRepository.Data.Remove(user);
-            await Clients.Group(user.LabRoomId).SendAsync("UserLeft", user.Id);
+            await _userRepository.DeleteAsync(user._id);
+            await Clients.Group(user.LabRoomId).SendAsync("UserLeft", user._id);
 
         }
 
@@ -49,7 +50,7 @@ public class MessageHub : Hub
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
         await Groups.AddToGroupAsync(Context.ConnectionId, userId);
 
-        User? user = _userRepository.Data.FirstOrDefault(e => e.Id == userId);
+        User? user = await _userRepository.GetByIdAsync(userId);
         if (user is null)
         {
             throw new Exception("User not found");
@@ -58,16 +59,23 @@ public class MessageHub : Hub
         user.ConnectionId = Context.ConnectionId;
         user.AddedToGroup = Context.ConnectionId;
 
-        var users = _userRepository.Data.Where(e => e.LabRoomId == roomId).Select(e => UserDto.ConvertToUser(e));
+        await _userRepository.UpdateAsync(user._id, user);
+
+        var users = (await _userRepository.Query
+            .Where(e => e.LabRoomId == roomId)
+            .ToListAsync())
+            .Select(UserDto.ConvertToUser)
+            .ToList();
+
         await Clients.Group(roomId).SendAsync("UserJoined", users.ToList());
     }
 
     public async Task LeaveRoom(string roomId, string userId)
     {
-        User? user = _userRepository.Data.FirstOrDefault(e => e.Id == userId);
+        User? user = await _userRepository.GetByIdAsync(userId);
         if (user is not null)
         {
-            _userRepository.Data.Remove(user);
+            await _userRepository.DeleteAsync(user._id);
             await Clients.Group(user.LabRoomId).SendAsync("UserLeft", userId);
             await Groups.RemoveFromGroupAsync(user.ConnectionId, roomId);
         }
@@ -75,8 +83,8 @@ public class MessageHub : Hub
 
     public async Task DeleteRoom(string roomId)
     {
-        List<User> allUsers = _userRepository.Data.Where(e => e.LabRoomId == roomId).ToList();
-        _userRepository.Data.RemoveAll(e => e.LabRoomId == roomId);
+        List<User> allUsers = await _userRepository.Query.Where(e => e.LabRoomId == roomId).ToListAsync();
+        await _userRepository.DeleteManyAsync(e => e.LabRoomId == roomId);
 
         await Clients.Group(roomId).SendAsync("RoomIsDeleted");
 
@@ -88,8 +96,8 @@ public class MessageHub : Hub
 
     public async Task SwitchToEditor(string targetUserId)
     {
-        User? toUser = _userRepository.Data.FirstOrDefault(e => e.Id == targetUserId);
-        User? currentUser = _userRepository.Data.FirstOrDefault(e => e.ConnectionId == Context.ConnectionId);
+        User? toUser = await _userRepository.GetByIdAsync(targetUserId);
+        User? currentUser = await _userRepository.FindFirstOrDefaultAsync(e => e.ConnectionId == Context.ConnectionId);
         if (toUser is null)
         {
             throw new Exception("User not found");
@@ -97,6 +105,8 @@ public class MessageHub : Hub
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, currentUser.AddedToGroup);
         await Groups.AddToGroupAsync(Context.ConnectionId, targetUserId);
         currentUser.AddedToGroup = targetUserId;
+
+        await _userRepository.UpdateAsync(currentUser._id, currentUser);
 
         await Clients.Client(Context.ConnectionId).SendAsync("ReceiveCodeChange", toUser.OwnCode);
     }
@@ -115,12 +125,13 @@ public class MessageHub : Hub
         {
             throw new ArgumentNullException(nameof(editorOwnerId));
         }
-        var user = _userRepository.Data.FirstOrDefault(e => e.Id == editorOwnerId);
+        var user = await _userRepository.GetByIdAsync(editorOwnerId);
         if (user is null)
         {
             throw new Exception("User not found");
         }
         user.OwnCode = newCode;
+        await _userRepository.UpdateAsync(user._id, user);
 
         // Notify all viewers of this IDE
         await Clients.GroupExcept(editorOwnerId, Context.ConnectionId).SendAsync("ReceiveCodeChange", newCode);
@@ -128,12 +139,14 @@ public class MessageHub : Hub
 
     public async Task ChangeLanguage(LanguageCode languageCode, string roomId)
     {
-        var room = _labRoomRepository.Data.FirstOrDefault(e => e.Id == roomId);
+        var room = await _labRoomRepository.GetByIdAsync(roomId);
         if (room is null)
         {
             throw new Exception("Room not found");
         }
         room.LanguageCode = languageCode;
+
+        await _labRoomRepository.UpdateAsync(room._id, room);
 
         await Clients.Group(roomId).SendAsync("LanguageChanged", languageCode);
     }

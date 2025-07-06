@@ -1,18 +1,14 @@
-﻿using System.Collections.Concurrent;
-using System.Collections.Generic;
-using InstantCodeLab.Domain.Entities;
+﻿using InstantCodeLab.Domain.Entities;
 using InstantCodeLab.Domain.Repositories;
+using MongoDB.Driver;
 
 namespace InstantCodeLab.Infrastructure.Persistence.Repositories;
 
-public class UserRepository : IUserRepository
+public class UserRepository : GenericRepository<User>, IUserRepository
 {
-    private readonly ConcurrentDictionary<string, List<User>> _userDb = new();
+    public override string CollectionName => "User";
 
-    public UserRepository()
+    public UserRepository(IMongoDatabase mongoDatabase) : base(mongoDatabase)
     {
-        _userDb.TryAdd("User", new List<User>());
     }
-
-    public List<User> Data => _userDb["User"];
 }

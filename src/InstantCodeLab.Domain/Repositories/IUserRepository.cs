@@ -1,9 +1,7 @@
-﻿using System.Collections.Generic;
-using InstantCodeLab.Domain.Entities;
+﻿using InstantCodeLab.Domain.Entities;
 
 namespace InstantCodeLab.Domain.Repositories;
 
-public interface IUserRepository
+public interface IUserRepository : IGenericRepository<User>
 {
-    List<User> Data { get; }
 }

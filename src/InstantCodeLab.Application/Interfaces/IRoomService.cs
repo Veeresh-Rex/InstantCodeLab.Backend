@@ -1,9 +1,10 @@
-﻿using InstantCodeLab.Application.DTOs;
+﻿using System.Threading.Tasks;
+using InstantCodeLab.Application.DTOs;
 
 namespace InstantCodeLab.Application.Interfaces;
 
 public interface IRoomService
 {
-   RoomResponseDto CreateRoom(RoomRequestDto request);
-   GetRoomResponseDto GetRoom(string roomId);
+    Task<RoomResponseDto> CreateRoom(RoomRequestDto request);
+    Task<GetRoomResponseDto> GetRoom(string roomId);
 }

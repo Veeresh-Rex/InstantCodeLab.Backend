@@ -15,7 +15,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddAppHealthChecks();
 builder.Services.AddSwagger();
 builder.Services.AddApiCors(builder.Configuration["AllowedHosts"] ?? string.Empty);
-builder.Services.AddPersistance();
+builder.Services.AddPersistance(builder.Configuration);
 builder.Services.AddSignalR();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandlerServices();
