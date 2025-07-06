@@ -9,6 +9,5 @@ public class User : BaseEntity
     public string LabRoomId { get; set; } = string.Empty;
     public string ConnectionId { get; set; } = string.Empty;
     public bool IsAdmin { get => UserType == 1; }
-    public bool IsUserAtOwnEditor { get; set; } = true;
-    public string AddedToGroup { get; set; }
+    public string AddedToGroup { get; set; } = string.Empty;
 }

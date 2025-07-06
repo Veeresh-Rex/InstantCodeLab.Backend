@@ -41,8 +41,6 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<MessageHub>("/message");
 
-app.MapGet("/", () => "Hello World from InstantCodeLab API!");
-
 await app.RunAsync();
 
 

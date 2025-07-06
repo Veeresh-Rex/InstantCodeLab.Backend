@@ -10,7 +10,6 @@ public enum LanguageCode
     c,
     csharp,
     cpp17,
-    dart,
     go,
     kotlin,
     nodejs,

@@ -12,7 +12,6 @@ public static class Constants
             { LanguageCode.c, 6 },
             { LanguageCode.csharp, 5 },
             { LanguageCode.cpp17, 2 },
-            { LanguageCode.dart, 5 },
             { LanguageCode.go, 5 },
             { LanguageCode.kotlin, 4 },
             { LanguageCode.nodejs, 6 },

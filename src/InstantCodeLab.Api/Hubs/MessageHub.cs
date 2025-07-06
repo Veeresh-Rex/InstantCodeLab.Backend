@@ -2,6 +2,7 @@ using InstantCodeLab.Application.DTOs;
 using InstantCodeLab.Domain.Entities;
 using InstantCodeLab.Domain.Enums;
 using InstantCodeLab.Domain.Repositories;
+using InstantCodeLab.Infrastructure.Utilities;
 using Microsoft.AspNetCore.SignalR;
 using MongoDB.Driver.Linq;
 
@@ -11,11 +12,13 @@ public class MessageHub : Hub
 {
     private readonly IUserRepository _userRepository;
     private readonly ILabRoomRepository _labRoomRepository;
+    private readonly CodeStore _codeStore;
 
-    public MessageHub(IUserRepository userRepository, ILabRoomRepository labRoomRepository)
+    public MessageHub(IUserRepository userRepository, ILabRoomRepository labRoomRepository, CodeStore codeStore)
     {
         _userRepository = userRepository;
         _labRoomRepository = labRoomRepository;
+        _codeStore = codeStore;
     }
 
     public override async Task OnConnectedAsync()
@@ -38,6 +41,8 @@ public class MessageHub : Hub
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, user.LabRoomId);
             await _userRepository.DeleteAsync(user._id);
+            _codeStore.RemoveCode(user._id);
+
             await Clients.Group(user.LabRoomId).SendAsync("UserLeft", user._id);
 
         }
@@ -77,6 +82,7 @@ public class MessageHub : Hub
         {
             await _userRepository.DeleteAsync(user._id);
             await Clients.Group(user.LabRoomId).SendAsync("UserLeft", userId);
+            _codeStore.RemoveCode(user._id);
             await Groups.RemoveFromGroupAsync(user.ConnectionId, roomId);
         }
     }
@@ -90,6 +96,7 @@ public class MessageHub : Hub
 
         foreach (var user in allUsers)
         {
+            _codeStore.RemoveCode(user._id);
             await Groups.RemoveFromGroupAsync(user.ConnectionId, roomId);
         }
     }
@@ -108,7 +115,9 @@ public class MessageHub : Hub
 
         await _userRepository.UpdateAsync(currentUser._id, currentUser);
 
-        await Clients.Client(Context.ConnectionId).SendAsync("ReceiveCodeChange", toUser.OwnCode);
+        string userCode = _codeStore.GetCode(toUser._id) ?? toUser.OwnCode;
+
+        await Clients.Client(Context.ConnectionId).SendAsync("ReceiveCodeChange", userCode);
     }
 
     /// <summary>
@@ -125,13 +134,8 @@ public class MessageHub : Hub
         {
             throw new ArgumentNullException(nameof(editorOwnerId));
         }
-        var user = await _userRepository.GetByIdAsync(editorOwnerId);
-        if (user is null)
-        {
-            throw new Exception("User not found");
-        }
-        user.OwnCode = newCode;
-        await _userRepository.UpdateAsync(user._id, user);
+
+        _codeStore.SetCode(editorOwnerId, newCode);
 
         // Notify all viewers of this IDE
         await Clients.GroupExcept(editorOwnerId, Context.ConnectionId).SendAsync("ReceiveCodeChange", newCode);

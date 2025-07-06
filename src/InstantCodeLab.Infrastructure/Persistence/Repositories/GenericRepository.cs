@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -65,6 +66,23 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : Bas
         catch (Exception ex)
         {
             Console.WriteLine($"Error deleting entities: {ex.Message}");
+        }
+    }
+
+    public async Task BulkWriteAsync(IEnumerable<WriteModel<T>> operations)
+    {
+        try
+        {
+            if (operations == null || !operations.Any())
+            {
+                return;
+            }
+
+            await _collection.BulkWriteAsync(operations);
+        }
+        catch (Exception)
+        {
+            throw;
         }
     }
 }
